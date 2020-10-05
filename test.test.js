@@ -11,7 +11,7 @@ describe("MySequelize Challenge", () => {
     mysqlCon = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password: null,
+      password: 'moran1324',
       database: 'db_test',
       multipleStatements: true,
     });
@@ -181,7 +181,7 @@ describe("MySequelize Challenge", () => {
 
     test("INCLUDE test", async () => {
       const results = await mysqlCon.query(`SELECT * FROM users`);
-
+      // console.log('users', results[0])
       await mysqlCon.query(`INSERT INTO playlists (name, creator)
           VALUES ('playlist1', ${results[0][0].id}),
           ('playlist2', ${results[0][2].id}),
@@ -200,7 +200,7 @@ describe("MySequelize Challenge", () => {
         ],
       });
 
-      console.log(myResults)
+      // console.log('myResults', myResults)
 
 
       expect(myResults[0].id).toBe(results[0][0].id);

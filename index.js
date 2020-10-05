@@ -5,44 +5,77 @@ class MySequelize {
     }
 
     async create(obj) {
-
-        /*
-           Model.create({
-               name: 'test',
-               email: 'test@gmail.com',
-               password: '123456789',
-               is_admin: false
-           })
-        */
+        await this.connection.query(
+            `INSERT INTO ${this.table} SET ?`, obj
+        )
     }
 
     async bulkCreate(arr) {
-
-        /*
-           Model.bulkCreate([
-               {
-               name: 'test',
-               email: 'test@gmail.com',
-               password: '123456789',
-               is_admin: false
-           },
-           {
-               name: 'test1',
-               email: 'test1@gmail.com',
-               password: '123456789',
-               is_admin: false
-           },
-           {
-               name: 'test2',
-               email: 'test2@gmail.com',
-               password: '123456789',
-               is_admin: true
-           },
-        ])
-        */
+        arr.map(obj => {
+            return this.connection.query(
+                `INSERT INTO ${this.table} SET ?`, obj
+            )
+        })
     }
 
     async findAll(options) {
+        if (!options) {
+            const result = await this.connection.query(`SELECT * FROM ${this.table}`)
+            return result[0];
+        }
+        let limitQuery = '';
+        let orderQuery = '';
+        let whereQuery = '';
+        let includeQuery = [];
+        let attributesQuery = '';
+        for (let prop in options) {
+            if (prop === 'limit') limitQuery = ` LIMIT ${options[prop]} `
+            if (prop === 'order') orderQuery = ` ORDER BY ${options[prop][0]} ${options[prop][1]} `
+            if (prop === 'include') {
+                // options[prop].map(table => {
+                //     tablesArr.push(table.table);
+                //     onsArr.push(`${table.table}.${table.tableForeignKey} = ${this.table}.${table.sourceForeignKey}`);
+                // })
+                options.include.forEach(async table => {
+                    const included = await this.connection.query(`
+                    SELECT * 
+                    FROM ${table.table}
+                    `)
+                    // WHERE ${table.table}.${table.tableForeignKey} = ${this.table}.${table.sourceForeignKey};
+                    included[0].forEach(row => includeQuery.push(row))
+                    includeQuery = included[0].map(row => row)
+                    console.log('include-in', includeQuery)
+                })
+                console.log('include-out', includeQuery)
+                // console.log('includeQuery', includeQuery)
+            }
+            if (prop === 'where') {
+                for (let condition in options.where) {
+                    whereQuery = `WHERE ${condition} = '${options.where[condition]}'`
+                }
+            }
+            if (prop === 'attributes') {
+                let attributesArr = options[prop].map(attribute => {
+                    if (typeof attribute === 'string') return attribute;
+                    if (typeof attribute === 'object') return attribute.join(' AS ');
+                })
+                attributesQuery = attributesArr.join(', ');
+            }
+        }
+        const sqlQuery = `
+        SELECT ${attributesQuery ? attributesQuery : '*' }
+        FROM ${this.table}
+        ${whereQuery ? whereQuery : ''}
+        
+        ${orderQuery ? orderQuery : ''}
+        ${limitQuery ? limitQuery : ''};
+        `;
+        const results = await this.connection.query(sqlQuery);
+        // console.log('query', sqlQuery)
+        // console.log('data', results[0])
+        return results[0];
+        
+        // ${includeQuery ? includeQuery.toString() : ''}
 
         /*
         Model.findAll({
@@ -79,7 +112,10 @@ class MySequelize {
         */
     }
 
-    async findByPk(id) {
+    async findByPk(id) { 
+        await this.connection.query(`
+        SELECT 
+        `) 
         /*
             Model.findByPk(id)
         */
