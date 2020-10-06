@@ -1,3 +1,5 @@
+const optionsHandler = require('./options');
+
 class MySequelize {
     constructor(connect, tableName) {
         this.connection = connect;
@@ -36,14 +38,14 @@ class MySequelize {
                 //     tablesArr.push(table.table);
                 //     onsArr.push(`${table.table}.${table.tableForeignKey} = ${this.table}.${table.sourceForeignKey}`);
                 // })
-                options.include.forEach(async table => {
-                    const included = await this.connection.query(`
+                await options.include.forEach(async table => {
+                    let included = await this.connection.query(`
                     SELECT * 
                     FROM ${table.table}
                     `)
                     // WHERE ${table.table}.${table.tableForeignKey} = ${this.table}.${table.sourceForeignKey};
                     included[0].forEach(row => includeQuery.push(row))
-                    includeQuery = included[0].map(row => row)
+                    // includeQuery = included[0].map(row => row)
                     console.log('include-in', includeQuery)
                 })
                 console.log('include-out', includeQuery)
@@ -113,9 +115,11 @@ class MySequelize {
     }
 
     async findByPk(id) { 
-        await this.connection.query(`
-        SELECT 
-        `) 
+        const results =  await this.connection.query(`
+        SELECT * FROM ${this.table}
+        WHERE id = ${id};
+        `)
+        return results[0];
         /*
             Model.findByPk(id)
         */
